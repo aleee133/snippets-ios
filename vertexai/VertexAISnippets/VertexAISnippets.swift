@@ -32,43 +32,61 @@ class Snippets {
     let vertex = VertexAI.vertexAI()
 
     // Initialize the generative model with a model that supports your use case
-    // Gemini 1.5 Pro is versatile and can accept both text-only or multimodal prompt inputs
-    let model = vertex.generativeModel(modelName: "gemini-1.5-pro-preview-0409")
+    // Gemini 1.5 models are versatile and can be used with all API capabilities
+    let model = vertex.generativeModel(modelName: "gemini-1.5-flash")
     // [END initialize_model]
 
     self.model = model
   }
 
-  func callGemini() async throws {
-    // [START call_gemini]
-    // Provide a prompt that contains text
-    let prompt = "Write a story about a magic backpack."
+  func configureModel() {
+    let vertex = VertexAI.vertexAI()
 
-    // To generate text output, call generateContent with the text input
-    let response = try await model.generateContent(prompt)
-    if let text = response.text {
-      print(text)
-    }
-    // [END call_gemini]
+    // [START configure_model]
+    let config = GenerationConfig(
+      temperature: 0.9,
+      topP: 0.1,
+      topK: 16,
+      maxOutputTokens: 200,
+      stopSequences: ["red"]
+    )
+
+    let model = vertex.generativeModel(
+      modelName: "gemini-1.5-flash",
+      generationConfig: config
+    )
+    // [END configure_model]
   }
 
-  func callGeminiStreaming() async throws {
-    // [START call_gemini_streaming]
-    // Provide a prompt that contains text
-    let prompt = "Write a story about a magic backpack."
+  func safetySettings() {
+    let vertex = VertexAI.vertexAI()
 
-    // To stream generated text output, call generateContentStream with the text input
-    let contentStream = model.generateContentStream(prompt)
-    for try await chunk in contentStream {
-      if let text = chunk.text {
-        print(text)
-      }
-    }
-    // [END call_gemini_streaming]
+    // [START safety_settings]
+    let model = vertex.generativeModel(
+      modelName: "gemini-1.5-flash",
+      safetySettings: [
+        SafetySetting(harmCategory: .harassment, threshold: .blockOnlyHigh)
+      ]
+    )
+    // [END safety_settings]
+  }
+
+  func multiSafetySettings() {
+    let vertex = VertexAI.vertexAI()
+
+    // [START multi_safety_settings]
+    let harassmentSafety = SafetySetting(harmCategory: .harassment, threshold: .blockOnlyHigh)
+    let hateSpeechSafety = SafetySetting(harmCategory: .hateSpeech, threshold: .blockMediumAndAbove)
+
+    let model = vertex.generativeModel(
+      modelName: "gemini-1.5-flash",
+      safetySettings: [harassmentSafety, hateSpeechSafety]
+    )
+    // [END multi_safety_settings]
   }
 
   func sendTextOnlyPromptStreaming() async throws {
-    // [START text_only_prompt_streaming]
+    // [START text_gen_text_only_prompt_streaming]
     // Provide a prompt that contains text
     let prompt = "Write a story about a magic backpack."
 
@@ -79,12 +97,11 @@ class Snippets {
         print(text)
       }
     }
-    // [END text_only_prompt_streaming]
+    // [END text_gen_text_only_prompt_streaming]
   }
 
-  // Note: This is the same as the call gemini prompt, but may change in the future.
   func sendTextOnlyPromt() async throws {
-    // [START text_only_prompt]
+    // [START text_gen_text_only_prompt]
     // Provide a prompt that contains text
     let prompt = "Write a story about a magic backpack."
 
@@ -93,11 +110,11 @@ class Snippets {
     if let text = response.text {
       print(text)
     }
-    // [END text_only_prompt]
+    // [END text_gen_text_only_prompt]
   }
 
   func sendMultimodalPromptStreaming() async throws {
-    // [START multimodal_prompt_streaming]
+    // [START text_gen_multimodal_one_image_prompt_streaming]
     #if canImport(UIKit)
       guard let image = UIImage(named: "image") else { fatalError() }
     #else
@@ -114,11 +131,11 @@ class Snippets {
         print(text)
       }
     }
-    // [END multimodal_prompt_streaming]
+    // [END text_gen_multimodal_one_image_prompt_streaming]
   }
 
   func sendMultimodalPrompt() async throws {
-    // [START multimodal_prompt]
+    // [START text_gen_multimodal_one_image_prompt]
     // Provide a text prompt to include with the image
     #if canImport(UIKit)
       guard let image = UIImage(named: "image") else { fatalError() }
@@ -133,11 +150,11 @@ class Snippets {
     if let text = response.text {
       print(text)
     }
-    // [END multimodal_prompt]
+    // [END text_gen_multimodal_one_image_prompt]
   }
 
   func multiImagePromptStreaming() async throws {
-    // [START two_image_prompt_streaming]
+    // [START text_gen_multimodal_multi_image_prompt_streaming]
     #if canImport(UIKit)
       guard let image1 = UIImage(named: "image1") else { fatalError() }
       guard let image2 = UIImage(named: "image2") else { fatalError() }
@@ -156,11 +173,11 @@ class Snippets {
         print(text)
       }
     }
-    // [END two_image_prompt_streaming]
+    // [END text_gen_multimodal_multi_image_prompt_streaming]
   }
 
   func multiImagePrompt() async throws {
-    // [START two_image_prompt]
+    // [START text_gen_multimodal_multi_image_prompt]
     #if canImport(UIKit)
       guard let image1 = UIImage(named: "image1") else { fatalError() }
       guard let image2 = UIImage(named: "image2") else { fatalError() }
@@ -177,13 +194,12 @@ class Snippets {
     if let text = response.text {
       print(text)
     }
-    // [END two_image_prompt]
+    // [END text_gen_multimodal_multi_image_prompt]
   }
 
   func textAndVideoPrompt() async throws {
-    // AVFoundation support coming soon™
-    // [START text_video_prompt]
-    guard let fileURL = Bundle.main.url(forResource: "sample", 
+    // [START text_gen_multimodal_video_prompt]
+    guard let fileURL = Bundle.main.url(forResource: "sample",
                                         withExtension: "mp4") else { fatalError() }
     let video = try Data(contentsOf: fileURL)
     let prompt = "What's in this video?"
@@ -194,11 +210,11 @@ class Snippets {
     if let text = response.text {
       print(text)
     }
-    // [END text_video_prompt]
+    // [END text_gen_multimodal_video_prompt]
   }
 
   func textAndVideoPromptStreaming() async throws {
-    // [START text_video_prompt_streaming]
+    // [START text_gen_multimodal_video_prompt_streaming]
     guard let fileURL = Bundle.main.url(forResource: "sample",
                                         withExtension: "mp4") else { fatalError() }
     let video = try Data(contentsOf: fileURL)
@@ -212,7 +228,7 @@ class Snippets {
         print(text)
       }
     }
-    // [END text_video_prompt_streaming]
+    // [END text_gen_multimodal_video_prompt_streaming]
   }
 
   func chatStreaming() async throws {
@@ -273,7 +289,7 @@ class Snippets {
     let response = try await model.countTokens(image, "What's in this picture?")
     print("Total Tokens: \(response.totalTokens)")
     print("Total Billable Characters: \(response.totalBillableCharacters)")
-    // [START count_tokens_text_image]
+    // [END count_tokens_text_image]
   }
 
   func countTokensMultiImage() async throws {
@@ -304,26 +320,142 @@ class Snippets {
   }
 
   func setSafetySetting() {
-    // [START set_safety_setting]
+    // [START set_one_safety_setting]
     let model = VertexAI.vertexAI().generativeModel(
-      modelName: "MODEL_NAME",
+      modelName: "gemini-1.5-flash",
       safetySettings: [
         SafetySetting(harmCategory: .harassment, threshold: .blockOnlyHigh)
       ]
     )
-    // [END set_safety_setting]
+    // [END set_one_safety_setting]
   }
 
   func setMultipleSafetySettings() {
-    // [START set_safety_settings]
+    // [START set_multi_safety_settings]
     let harassmentSafety = SafetySetting(harmCategory: .harassment, threshold: .blockOnlyHigh)
     let hateSpeechSafety = SafetySetting(harmCategory: .hateSpeech, threshold: .blockMediumAndAbove)
 
     let model = VertexAI.vertexAI().generativeModel(
-      modelName: "MODEL_NAME",
+      modelName: "gemini-1.5-flash",
       safetySettings: [harassmentSafety, hateSpeechSafety]
     )
-    // [END set_safety_settings]
+    // [END set_multi_safety_settings]
+  }
+
+  // MARK: - Function Calling
+
+  func functionCalling() async throws {
+    // [START create_function]
+    func makeAPIRequest(currencyFrom: String, currencyTo: String) -> JSONObject {
+      // This hypothetical API returns a JSON such as:
+      // {"base":"USD","rates":{"SEK": 10.99}}
+      return [
+        "base": .string(currencyFrom),
+        "rates": .object([currencyTo: .number(10.99)]),
+      ]
+    }
+    // [END create_function]
+
+    // [START create_function_metadata]
+    let getExchangeRate = FunctionDeclaration(
+      name: "getExchangeRate",
+      description: "Get the exchange rate for currencies between countries",
+      parameters: [
+        "currencyFrom": Schema(
+          type: .string,
+          description: "The currency to convert from."
+        ),
+        "currencyTo": Schema(
+          type: .string,
+          description: "The currency to convert to."
+        ),
+      ],
+      requiredParameters: ["currencyFrom", "currencyTo"]
+    )
+    // [END create_function_metadata]
+
+    // [START initialize_model_function]
+    // Initialize the Vertex AI service
+    let vertex = VertexAI.vertexAI()
+    
+    // Initialize the generative model
+    // Use a model that supports function calling, like a Gemini 1.5 model.
+    let model = vertex.generativeModel(
+      modelName: "gemini-1.5-flash",
+      // Specify the function declaration.
+      tools: [Tool(functionDeclarations: [getExchangeRate])]
+    )
+    // [END initialize_model_function]
+
+    // [START generate_function_call]
+    let chat = model.startChat()
+
+    let prompt = "How much is 50 US dollars worth in Swedish krona?"
+
+    // Send the message to the generative model
+    let response1 = try await chat.sendMessage(prompt)
+
+    // Check if the model responded with a function call
+    guard let functionCall = response1.functionCalls.first else {
+      fatalError("Model did not respond with a function call.")
+    }
+    // Print an error if the returned function was not declared
+    guard functionCall.name == "getExchangeRate" else {
+      fatalError("Unexpected function called: \(functionCall.name)")
+    }
+    // Verify that the names and types of the parameters match the declaration
+    guard case let .string(currencyFrom) = functionCall.args["currencyFrom"] else {
+      fatalError("Missing argument: currencyFrom")
+    }
+    guard case let .string(currencyTo) = functionCall.args["currencyTo"] else {
+      fatalError("Missing argument: currencyTo")
+    }
+
+    // Call the hypothetical API
+    let apiResponse = makeAPIRequest(currencyFrom: currencyFrom, currencyTo: currencyTo)
+
+    // Send the API response back to the model so it can generate a text response that can be
+    // displayed to the user.
+    let response = try await chat.sendMessage([ModelContent(
+      role: "function",
+      parts: [.functionResponse(FunctionResponse(
+        name: functionCall.name,
+        response: apiResponse
+      ))]
+    )])
+
+    // Log the text response.
+    guard let modelResponse = response.text else {
+      fatalError("Model did not respond with text.")
+    }
+    print(modelResponse)
+    // [END generate_function_call]
+  }
+
+  func functionCallingModes() {
+    let getExchangeRate = FunctionDeclaration(
+      name: "getExchangeRate",
+      description: "Get the exchange rate for currencies between countries",
+      parameters: nil,
+      requiredParameters: nil
+    )
+
+    // [START function_modes]
+    let model = VertexAI.vertexAI().generativeModel(
+      // Setting a function calling mode is only available in Gemini 1.5 Pro
+      modelName: "gemini-1.5-pro",
+      // Pass the function declaration
+      tools: [Tool(functionDeclarations: [getExchangeRate])],
+      toolConfig: ToolConfig(
+        functionCallingConfig: FunctionCallingConfig(
+          // Only call functions (model won't generate text)
+          mode: FunctionCallingConfig.Mode.any,
+          // This should only be set when the Mode is .any.
+          allowedFunctionNames: ["getExchangeRate"]
+        )
+      )
+    )
+    // [END function_modes]
   }
 
 }
